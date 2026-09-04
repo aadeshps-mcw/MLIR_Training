@@ -1,8 +1,4 @@
 # MLIR_Training
-
-
-`mlir-train` is a hands-on starter repository for training reference and learning MLIR (Multi-Level Intermediate Representation) compiler design, built on top of LLVM/MLIR. The repo demonstrates a basic custom out-of-tree MLIR dialect built from scratch using TableGen (`.td`), generating C++ bindings, implementing lowering, implementing custom ops and attributes, creating a standalone compiler tool (`aadesh-opt`), and writing `.mlir` tests and other MLIR concepts.
-
 ---
 
 ## Overview
