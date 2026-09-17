@@ -5,6 +5,11 @@
 #include "mlir/IR/BuiltinOps.h"          // for mlir::ModuleOp
 #include "mlir/Dialect/Tosa/IR/TosaOps.h" // for mlir::tosa::TosaDialect
 #include "mlir/Dialect/Arith/IR/Arith.h"  // for mlir::arith::ArithDialect
+#include "mlir/Dialect/Linalg/IR/Linalg.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Dialect/Math/IR/Math.h"
+#include "mlir/Dialect/Tensor/IR/Tensor.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include <memory>
 
 namespace mlir {
