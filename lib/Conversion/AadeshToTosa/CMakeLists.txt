@@ -15,4 +15,9 @@ add_mlir_conversion_library(AadeshToTosa
   MLIRPass
   MLIRTransforms
   MLIRTransformUtils
+  MLIRLinalgDialect
+  MLIRSCFDialect
+  MLIRMathDialect
+  MLIRTensorDialect
+  MLIRControlFlowDialect
 )
