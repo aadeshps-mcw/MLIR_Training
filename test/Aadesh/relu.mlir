@@ -82,3 +82,102 @@ func.func @relu_tensor_ui32(%arg0: tensor<4xui32>) -> tensor<4xui32> {
   %0 = aadesh.relu %arg0 : tensor<4xui32>
   return %0 : tensor<4xui32>
 }
+
+// -----
+
+// 2D Tensor + float: should lower to tosa.clamp
+// CHECK-LABEL: func.func @relu_tensor_2d_f32
+func.func @relu_tensor_2d_f32(%arg0: tensor<4x8xf32>) -> tensor<4x8xf32> {
+  // CHECK-NOT: aadesh.relu
+  // CHECK: %[[RES:.*]] = tosa.clamp %arg0 {
+  // CHECK-SAME: max_val = 0x7F800000 : f32
+  // CHECK-SAME: min_val = 0.000000e+00 : f32
+  // CHECK-SAME: } : (tensor<4x8xf32>) -> tensor<4x8xf32>
+  %0 = aadesh.relu %arg0 : tensor<4x8xf32>
+  // CHECK: return %[[RES]]
+  return %0 : tensor<4x8xf32>
+}
+
+// -----
+
+// 2D Tensor + int: should lower to tosa.clamp
+// CHECK-LABEL: func.func @relu_tensor_2d_i32
+func.func @relu_tensor_2d_i32(%arg0: tensor<4x8xi32>) -> tensor<4x8xi32> {
+  // CHECK-NOT: aadesh.relu
+  // CHECK: %[[RES:.*]] = tosa.clamp %arg0 {
+  // CHECK-SAME: max_val = 2147483647 : i32
+  // CHECK-SAME: min_val = 0 : i32
+  // CHECK-SAME: } : (tensor<4x8xi32>) -> tensor<4x8xi32>
+  %0 = aadesh.relu %arg0 : tensor<4x8xi32>
+  // CHECK: return %[[RES]]
+  return %0 : tensor<4x8xi32>
+}
+
+// -----
+
+// 3D Tensor + float: should lower to tosa.clamp
+// CHECK-LABEL: func.func @relu_tensor_3d_f32
+func.func @relu_tensor_3d_f32(%arg0: tensor<2x4x8xf32>) -> tensor<2x4x8xf32> {
+  // CHECK-NOT: aadesh.relu
+  // CHECK: %[[RES:.*]] = tosa.clamp %arg0 {
+  // CHECK-SAME: max_val = 0x7F800000 : f32
+  // CHECK-SAME: min_val = 0.000000e+00 : f32
+  // CHECK-SAME: } : (tensor<2x4x8xf32>) -> tensor<2x4x8xf32>
+  %0 = aadesh.relu %arg0 : tensor<2x4x8xf32>
+  // CHECK: return %[[RES]]
+  return %0 : tensor<2x4x8xf32>
+}
+
+// -----
+
+// 3D Tensor + int: should lower to tosa.clamp
+// CHECK-LABEL: func.func @relu_tensor_3d_i32
+func.func @relu_tensor_3d_i32(%arg0: tensor<2x4x8xi32>) -> tensor<2x4x8xi32> {
+  // CHECK-NOT: aadesh.relu
+  // CHECK: %[[RES:.*]] = tosa.clamp %arg0 {
+  // CHECK-SAME: max_val = 2147483647 : i32
+  // CHECK-SAME: min_val = 0 : i32
+  // CHECK-SAME: } : (tensor<2x4x8xi32>) -> tensor<2x4x8xi32>
+  %0 = aadesh.relu %arg0 : tensor<2x4x8xi32>
+  // CHECK: return %[[RES]]
+  return %0 : tensor<2x4x8xi32>
+}
+
+// -----
+
+// 2D Unsigned tensor: should fold to identity
+// CHECK-LABEL: func.func @relu_tensor_2d_ui32
+// CHECK-SAME: (%[[ARG0:.*]]: tensor<4x8xui32>) -> tensor<4x8xui32>
+func.func @relu_tensor_2d_ui32(%arg0: tensor<4x8xui32>) -> tensor<4x8xui32> {
+  // CHECK-NOT: tosa.clamp
+  // CHECK: return %[[ARG0]]
+  %0 = aadesh.relu %arg0 : tensor<4x8xui32>
+  return %0 : tensor<4x8xui32>
+}
+
+// -----
+
+// 3D Unsigned tensor: should fold to identity
+// CHECK-LABEL: func.func @relu_tensor_3d_ui32
+// CHECK-SAME: (%[[ARG0:.*]]: tensor<2x4x8xui32>) -> tensor<2x4x8xui32>
+func.func @relu_tensor_3d_ui32(%arg0: tensor<2x4x8xui32>) -> tensor<2x4x8xui32> {
+  // CHECK-NOT: tosa.clamp
+  // CHECK: return %[[ARG0]]
+  %0 = aadesh.relu %arg0 : tensor<2x4x8xui32>
+  return %0 : tensor<2x4x8xui32>
+}
+
+// -----
+
+// Dynamic-shaped 2D tensor + float: should still lower to tosa.clamp
+// CHECK-LABEL: func.func @relu_tensor_2d_dynamic_f32
+func.func @relu_tensor_2d_dynamic_f32(%arg0: tensor<?x8xf32>) -> tensor<?x8xf32> {
+  // CHECK-NOT: aadesh.relu
+  // CHECK: %[[RES:.*]] = tosa.clamp %arg0 {
+  // CHECK-SAME: max_val = 0x7F800000 : f32
+  // CHECK-SAME: min_val = 0.000000e+00 : f32
+  // CHECK-SAME: } : (tensor<?x8xf32>) -> tensor<?x8xf32>
+  %0 = aadesh.relu %arg0 : tensor<?x8xf32>
+  // CHECK: return %[[RES]]
+  return %0 : tensor<?x8xf32>
+}
