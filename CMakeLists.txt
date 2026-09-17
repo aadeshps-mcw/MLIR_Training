@@ -31,5 +31,15 @@ endif()
 add_subdirectory(include/Aadesh)   # generates AadeshOpsIncGen + AadeshPassIncGen
 add_subdirectory(lib/Dialect)      # builds MLIRAadesh
 add_subdirectory(lib/Conversion)   # builds AadeshToTosa
+add_subdirectory(lib/CAPI)  
 add_subdirectory(tools)
 add_subdirectory(test)
+
+if(MLIR_ENABLE_BINDINGS_PYTHON)
+  message(STATUS "Aadesh: MLIR Python bindings are enabled, adding python/")
+  include(MLIRDetectPythonEnv)
+  mlir_configure_python_dev_packages()
+  add_subdirectory(python)
+else()
+  message(STATUS "Aadesh: MLIR Python bindings are disabled; skipping python/")
+endif()
