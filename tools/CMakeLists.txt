@@ -7,6 +7,7 @@ target_link_libraries(aadesh-opt
   MLIRAadesh
   MLIRIR
   AadeshToTosa
+  AadeshToLoops
   MLIRMlirOptMain
   MLIRRegisterAllDialects
   MLIRRegisterAllPasses
