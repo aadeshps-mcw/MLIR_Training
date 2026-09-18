@@ -24,4 +24,22 @@ def LowerAadeshToTosa : Pass<"lower-aadesh-to-tosa", "mlir::ModuleOp"> {
   ];
 }
 
+def LowerAadeshPowToLoops : Pass<"lower-aadesh-pow-to-loops", "mlir::ModuleOp"> {
+  let summary = "Lower aadesh.pow using exponentiation-by-squaring loops";
+  let description = [{
+    Lowers `aadesh.pow` into an `scf.for`-based exponentiation-by-squaring
+    loop over `arith` ops, for integer or float base with an integer-typed
+    exponent (assumed non-negative). Tensor operands are handled via a
+    `linalg.generic` whose body performs the same loop.
+  }];
+  let constructor = "aadesh::createLowerAadeshPowToLoopsPass()";
+  let dependentDialects = [
+    "mlir::arith::ArithDialect",
+    "mlir::scf::SCFDialect",
+    "mlir::linalg::LinalgDialect",
+    "mlir::tensor::TensorDialect",
+    "mlir::cf::ControlFlowDialect"
+  ];
+}
+
 #endif // AADESH_PASSES_TD
