@@ -1,1 +1,2 @@
 add_subdirectory(AadeshToTosa)
+add_subdirectory(AadeshToLoops)
