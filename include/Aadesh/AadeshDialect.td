@@ -4,6 +4,7 @@
 include "mlir/IR/OpBase.td"
 
 def Aadesh_Dialect : Dialect {
+  let hasConstantMaterializer = 1;
   let name = "aadesh";
   let cppNamespace = "::mlir::aadesh";
   let summary = "The Aadesh Dialect";
