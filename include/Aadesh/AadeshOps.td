@@ -15,7 +15,7 @@ class Aadesh_Op<string mnemonic, list<Trait> traits = []> :
 def F32ElementsAttr : FloatElementsAttr<32>;
 
 //===----------------------------------------------------------------------===//
-// AddOp — existing op, unchanged
+// AddOp
 //===----------------------------------------------------------------------===//
 
 def AddOp : Aadesh_Op<"add", [Pure, SameOperandsAndResultType]> {
@@ -37,7 +37,7 @@ def AddOp : Aadesh_Op<"add", [Pure, SameOperandsAndResultType]> {
 }
 
 //===----------------------------------------------------------------------===//
-// ApplyMatrixOp — new op, added alongside AddOp
+// ApplyMatrixOp
 //===----------------------------------------------------------------------===//
 
 def ApplyMatrixOp : Aadesh_Op<"apply_matrix", [Pure]> {
@@ -72,7 +72,7 @@ def ApplyMatrixOp : Aadesh_Op<"apply_matrix", [Pure]> {
 
 
 //===----------------------------------------------------------------------===//
-// MulOp — new op, mirrors AddOp's type coverage
+// MulOp
 //===----------------------------------------------------------------------===//
 
 def MulOp : Aadesh_Op<"mul", [Pure, SameOperandsAndResultType]> {
@@ -94,10 +94,11 @@ def MulOp : Aadesh_Op<"mul", [Pure, SameOperandsAndResultType]> {
 }
 
 //===----------------------------------------------------------------------===//
-// ReluOp — new op, mirrors AddOp's type coverage (single operand)
+// ReluOp
 //===----------------------------------------------------------------------===//
 
 def ReluOp : Aadesh_Op<"relu", [Pure, SameOperandsAndResultType]> {
+  let hasFolder = 1;
   let summary = "Rectified linear unit: returns max(0, x)";
   let description = [{
     Elementwise `max(0, x)`. Supports the same scalar float/integer types
@@ -118,4 +119,50 @@ def ReluOp : Aadesh_Op<"relu", [Pure, SameOperandsAndResultType]> {
   );
 
   let assemblyFormat = "$input attr-dict `:` type($result)";
+}
+
+//===----------------------------------------------------------------------===//
+// PowOp — handles scalar/tensor operands in any combination and
+// broadcastable shapes. Only float base/exponent are currently supported.
+//===----------------------------------------------------------------------===//
+
+def PowOp : Aadesh_Op<"pow", [Pure]> {
+  let summary = "Elementwise power operation in aadesh dialect";
+  let description = [{
+    Elementwise `lhs ^ rhs`. Operands may each independently be a plain
+    scalar or a tensor, and tensor operands may differ in shape as long
+    as they are NumPy-broadcastable.
+
+    Lowering currently only supports float base and float exponent
+    (`math.powf`, with the narrower operand extended to match widths
+    when float bitwidths differ). Integer base and/or exponent are
+    accepted by the op's type constraints but are NOT YET IMPLEMENTED
+    in the TOSA lowering — `LowerAadeshToTosa` will emit an op error
+    and fail to legalize if either operand has integer element type.
+
+    Scalar-scalar pairs lower directly to the scalar op above (no
+    linalg). Any pair involving a tensor lowers to a `linalg.generic`;
+    a plain scalar paired with a tensor is first splatted to the
+    result's shape, and differently-shaped tensor operands use
+    broadcast-aware indexing maps (dimensions of size 1 map to a
+    constant 0 instead of an identity index).
+  }];
+
+  let arguments = (ins
+    AnyTypeOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger,
+               TensorOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger]>]>:$lhs,
+    AnyTypeOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger,
+               TensorOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger]>]>:$rhs
+  );
+
+  let results = (outs
+    AnyTypeOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger,
+               TensorOf<[F32, F64, AnySignlessInteger, AnySignedInteger, AnyUnsignedInteger]>]>:$result
+  );
+
+  let assemblyFormat = [{
+    $lhs `,` $rhs attr-dict `:` functional-type(operands, results)
+  }];
+
+  let hasVerifier = 1;
 }
