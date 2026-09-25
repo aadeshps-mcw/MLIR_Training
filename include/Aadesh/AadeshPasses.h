@@ -19,6 +19,8 @@ namespace aadesh {
 #include "Aadesh/AadeshPasses.h.inc"
 
 std::unique_ptr<Pass> createLowerAadeshToTosaPass();
+std::unique_ptr<Pass> createLowerAadeshPowToLoopsPass();
+std::unique_ptr<Pass> createLowerAadeshArgMaxToLoopsPass();
 
 #define GEN_PASS_REGISTRATION
 #include "Aadesh/AadeshPasses.h.inc"

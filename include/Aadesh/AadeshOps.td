@@ -68,8 +68,6 @@ def ApplyMatrixOp : Aadesh_Op<"apply_matrix", [Pure]> {
   let hasVerifier = 1;
 }
 
-#endif // AADESH_OPS
-
 
 //===----------------------------------------------------------------------===//
 // MulOp
@@ -166,3 +164,45 @@ def PowOp : Aadesh_Op<"pow", [Pure]> {
 
   let hasVerifier = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// ArgMaxOp — new op, mirrors torch.argmax(input) / torch.argmax(input, dim, keepdim)
+//===----------------------------------------------------------------------===//
+
+def ArgMaxOp : Aadesh_Op<"argmax", [Pure]> {
+  let summary = "Returns the index/indices of the maximum value(s) of a tensor";
+  let description = [{
+    Mirrors `torch.argmax`.
+
+    - `dim` is optional. If absent, `input` is treated as flattened and
+      `result` is a rank-0 (scalar) index tensor — the index into the
+      flattened tensor, matching `torch.argmax(input)`.
+    - If `dim` is present, the reduction happens along that dimension.
+      `keep_dim` controls whether the reduced dimension is retained
+      (with size 1) in `result`, matching torch's `keepdim`.
+    - Ties are broken by returning the index of the first occurrence,
+      matching torch's documented tie-breaking behavior.
+    - `dim`'s validity (i.e. `-rank <= dim < rank` for the *input*'s
+      rank) and the resulting shape of `result` given `keep_dim` are
+      checked in the verifier, since none of that is expressible via
+      the type constraints alone.
+  }];
+
+  let arguments = (ins
+    TensorOf<[AnyFloat, AnyInteger]>:$input,
+    OptionalAttr<I64Attr>:$dim,
+    DefaultValuedAttr<BoolAttr, "false">:$keep_dim
+  );
+
+  let results = (outs
+    TensorOf<[AnySignlessInteger]>:$result
+  );
+
+  let assemblyFormat = [{
+    $input attr-dict `:` functional-type(operands, results)
+  }];
+
+  let hasVerifier = 1;
+}
+
+#endif // AADESH_OPS

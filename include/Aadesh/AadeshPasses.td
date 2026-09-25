@@ -41,4 +41,40 @@ def LowerAadeshToTosa : Pass<"lower-aadesh-to-tosa", "mlir::ModuleOp"> {
   ];
 }
 
+def LowerAadeshPowToLoops : Pass<"lower-aadesh-pow-to-loops", "mlir::ModuleOp"> {
+  let summary = "Lower aadesh.pow using exponentiation-by-squaring loops";
+  let description = [{
+    Lowers `aadesh.pow` into an `scf.for`-based exponentiation-by-squaring
+    loop over `arith` ops, for integer or float base with an integer-typed
+    exponent (assumed non-negative). Tensor operands are handled via a
+    `linalg.generic` whose body performs the same loop.
+  }];
+  let constructor = "aadesh::createLowerAadeshPowToLoopsPass()";
+  let dependentDialects = [
+    "mlir::arith::ArithDialect",
+    "mlir::scf::SCFDialect",
+    "mlir::linalg::LinalgDialect",
+    "mlir::tensor::TensorDialect",
+    "mlir::cf::ControlFlowDialect"
+  ];
+}
+
+def LowerAadeshArgMaxToLoops : Pass<"lower-aadesh-argmax-to-loops", "mlir::ModuleOp"> {
+  let summary = "Lower aadesh.argmax to scf loops";
+  let description = [{
+    Lowers `aadesh.argmax` into `scf.for`-based reduction loops over
+    `tensor.extract`/`tensor.insert`. When `dim` is absent, the input is
+    flattened and reduced over all elements. When `dim` is present, one
+    `scf.for` per non-reduced dimension is nested around the reduction
+    loop, with `keep_dim` controlling whether the reduced axis survives
+    (size 1) in the result.
+  }];
+  let constructor = "aadesh::createLowerAadeshArgMaxToLoopsPass()";
+  let dependentDialects = [
+    "mlir::arith::ArithDialect",
+    "mlir::scf::SCFDialect",
+    "mlir::tensor::TensorDialect"
+  ];
+}
+
 #endif // AADESH_PASSES_TD
