@@ -153,3 +153,86 @@ mlir::LogicalResult mlir::aadesh::PowOp::verify()
 
   return mlir::success();
 }
+
+//===----------------------------------------------------------------------===//
+// ArgMaxOp::verify()
+//===----------------------------------------------------------------------===//
+//
+// ODS can express input/result element-type constraints but nothing about
+// how $dim and $keep_dim relate $input's shape to $result's shape, so all
+// of that lives here. Mirrors torch.argmax(input) / torch.argmax(input, dim, keepdim).
+
+mlir::LogicalResult mlir::aadesh::ArgMaxOp::verify()
+{
+  Type inputType = getInput().getType();
+  Type resultType = getResult().getType();
+
+  if (llvm::isa<UnrankedTensorType>(inputType))
+    return emitOpError("unranked tensor operands are not supported");
+  if (llvm::isa<UnrankedTensorType>(resultType))
+    return emitOpError("unranked tensor results are not supported");
+
+  auto inputTensor = llvm::cast<RankedTensorType>(inputType);
+  auto resultTensor = llvm::cast<RankedTensorType>(resultType);
+
+  if (!inputTensor.hasStaticShape())
+    return emitOpError("dynamic input tensor shapes are not yet supported");
+  if (!resultTensor.hasStaticShape())
+    return emitOpError("dynamic result tensor shapes are not yet supported");
+
+  llvm::ArrayRef<int64_t> inputShape = inputTensor.getShape();
+  int64_t inputRank = inputTensor.getRank();
+
+  std::optional<int64_t> dim = getDim();
+  bool keepDim = getKeepDim();
+
+  llvm::SmallVector<int64_t> expectedShape;
+
+  if (!dim.has_value())
+  {
+    // Flattened case: result is a scalar index, regardless of keep_dim
+    // (torch.argmax(input) ignores keepdim when dim is None).
+    // expectedShape stays empty -> rank-0 tensor.
+  }
+  else
+  {
+    int64_t d = *dim;
+
+    // Accept torch-style negative dims: -rank <= d < rank.
+    if (d < -inputRank || d >= inputRank)
+      return emitOpError("dim ")
+             << d << " is out of range for input of rank " << inputRank
+             << " (expected in range [" << -inputRank << ", " << inputRank - 1
+             << "])";
+
+    int64_t normDim = d < 0 ? d + inputRank : d;
+
+    for (int64_t i = 0; i < inputRank; ++i)
+    {
+      if (i == normDim)
+      {
+        if (keepDim)
+          expectedShape.push_back(1);
+        // else: dimension is dropped entirely
+      }
+      else
+      {
+        expectedShape.push_back(inputShape[i]);
+      }
+    }
+  }
+
+  if (resultTensor.getRank() != static_cast<int64_t>(expectedShape.size()))
+    return emitOpError("expected result rank ")
+           << expectedShape.size() << ", got " << resultTensor.getRank();
+
+  if (resultTensor.getShape() != llvm::ArrayRef<int64_t>(expectedShape))
+  {
+    return emitOpError("result shape does not match expected shape for "
+                       "reduction (dim=")
+           << (dim.has_value() ? std::to_string(*dim) : std::string("none"))
+           << ", keep_dim=" << (keepDim ? "true" : "false") << ")";
+  }
+
+  return mlir::success();
+}
